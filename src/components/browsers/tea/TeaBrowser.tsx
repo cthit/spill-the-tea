@@ -11,6 +11,7 @@ import { FOCUS_RING } from "@/lib/styles";
 import { TeaStat } from "@/lib/types";
 import { useMemo, useState } from "react";
 import { TeaCard } from "./TeaCard";
+import { TeaOfTheDay } from "./TeaOfTheDay";
 import { TeaTable } from "./TeaTable";
 
 type Props = {
@@ -59,6 +60,7 @@ export function TeaBrowser({
   urlPrefix,
 }: Props) {
   const tagKeys = [ALL_TAG_KEY, ...tags.map(t => t.name).toSorted()];
+  const teaOfTheDay = selectTeaOfTheDay(teas);
 
   const [view, setView] = useState<ViewKey>("grid");
   const [tag, setTag] = useState<string>(ALL_TAG_KEY);
@@ -199,14 +201,31 @@ export function TeaBrowser({
             gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))",
           }}
         >
-          {filtered.map(tea => (
-            <TeaCard
-              key={tea.id}
-              tea={tea}
-              urlPrefix={urlPrefix}
-              onClick={onClick}
-            />
-          ))}
+          {filtered.length == teas.length ? (
+            <div className="md:col-span-3 md:row-span-2">
+              <TeaOfTheDay
+                key={teaOfTheDay.id}
+                tea={teaOfTheDay}
+                urlPrefix={urlPrefix}
+                onClick={onClick}
+              ></TeaOfTheDay>
+            </div>
+          ) : null}
+
+          {filtered
+            .filter(tea => {
+              return filtered.length == teas.length
+                ? tea.id != teaOfTheDay.id
+                : filtered;
+            })
+            .map(tea => (
+              <TeaCard
+                key={tea.id}
+                tea={tea}
+                urlPrefix={urlPrefix}
+                onClick={onClick}
+              />
+            ))}
         </div>
       ) : (
         <TeaTable teas={filtered} urlPrefix={urlPrefix} />
@@ -245,4 +264,13 @@ function ViewPicker({
       })}
     </div>
   );
+}
+
+function selectTeaOfTheDay(teas: TeaStat[]): TeaStat {
+  const currentDate = new Date(Date.now());
+  const teaOfTheDayIndex =
+    (currentDate.getDate() +
+      currentDate.getMonth() * currentDate.getFullYear()) %
+    teas.length;
+  return teas[teaOfTheDayIndex];
 }
