@@ -6,7 +6,7 @@ FROM node:${NODE_VERSION}-alpine AS base
 WORKDIR /app
 
 # Install pnpm
-RUN yarn global add pnpm
+RUN yarn global add pnpm@10
 
 # ============================================
 # Stage 1: Dependencies Installation Stage

@@ -1,6 +1,6 @@
 import { ensureClientIdOnResponse } from "@/lib/clientId";
 import { relativeUrl } from "@/lib/env";
-import { verifySession } from "@/lib/session";
+import { isAdmin, verifySession } from "@/lib/session";
 import { NextRequest, NextResponse, ProxyConfig } from "next/server";
 
 const protectedRoutes: RegExp[] = [
@@ -17,6 +17,12 @@ export default async function proxy(req: NextRequest): Promise<NextResponse> {
   const isProtectedRoute = protectedRoutes.some(pattern => pattern.test(path));
 
   if (isProtectedRoute) {
+    // The redirect is to the homepage instead of the login page since Gamma
+    // will instantly authenticate the user if they have authorized the client.
+    // This is an unintuitive user flow, as the user is logged in without an
+    // intentional action.
+    const unauthorizedPage = relativeUrl("/");
+
     // Verify session and redirect if not authenticated
     try {
       await verifySession();
@@ -31,10 +37,15 @@ export default async function proxy(req: NextRequest): Promise<NextResponse> {
         console.error("Failed to verify session:", e);
       }
 
-      // The mocked authentication redirects to the homepage instead of the
-      // login page since the mocked login would instantly re-authenticate
-      // the user.
-      return NextResponse.redirect(relativeUrl("/"));
+      return NextResponse.redirect(unauthorizedPage);
+    }
+
+    const admin = await isAdmin().catch(reason => {
+      console.error("Failed to check admin status:", reason);
+      return false;
+    });
+    if (!admin) {
+      return NextResponse.redirect(unauthorizedPage);
     }
   }
 

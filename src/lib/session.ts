@@ -155,9 +155,10 @@ export const verifySession = cache(
     // Check if session does not exist or has expired
     const currentTimeSeconds = Date.now() / 1000;
     if (session?.exp == undefined || session.exp <= currentTimeSeconds) {
-      // The mocked authentication redirects to the homepage instead of the
-      // login page since the mocked login would instantly re-authenticate
-      // the user.
+      // The redirect is to the homepage instead of the login page since Gamma
+      // will instantly authenticate the user if they have authorized the
+      // client. This is an unintuitive user flow, as the user is logged in
+      // without an intentional action.
       redirect("/");
     }
 
